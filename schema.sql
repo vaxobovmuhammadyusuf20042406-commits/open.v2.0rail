@@ -31,6 +31,7 @@ create table public.items (
 );
 create index items_created_idx on public.items (created_at desc);
 create index items_owner_idx on public.items (owner);
+create index items_reserved_for_idx on public.items (reserved_for);
 
 create table public.swap_requests (
   id            uuid primary key default gen_random_uuid(),
@@ -44,6 +45,7 @@ create table public.swap_requests (
 );
 create index swap_requests_item_idx on public.swap_requests (item_id);
 create index swap_requests_requester_idx on public.swap_requests (requester);
+create index swap_requests_offer_item_idx on public.swap_requests (offer_item_id);
 -- one open request per person per item
 create unique index swap_requests_one_open
   on public.swap_requests (item_id, requester)
@@ -57,6 +59,7 @@ create table public.messages (
   created_at  timestamptz not null default now()
 );
 create index messages_request_idx on public.messages (request_id, created_at);
+create index messages_sender_idx on public.messages (sender);
 
 -- ============================================================
 -- 2. Helper: is the signed-in user part of this request?
@@ -94,39 +97,39 @@ alter table public.messages      enable row level security;
 create policy "profiles are public" on public.profiles
   for select using (true);
 create policy "insert own profile" on public.profiles
-  for insert to authenticated with check (id = auth.uid());
+  for insert to authenticated with check (id = (select auth.uid()));
 create policy "update own profile" on public.profiles
-  for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+  for update to authenticated using (id = (select auth.uid())) with check (id = (select auth.uid()));
 
 -- Items: anyone (even signed out) can browse; owners manage their own.
 create policy "items are public" on public.items
   for select using (true);
 create policy "insert own items" on public.items
-  for insert to authenticated with check (owner = auth.uid());
+  for insert to authenticated with check (owner = (select auth.uid()));
 create policy "update own items" on public.items
-  for update to authenticated using (owner = auth.uid()) with check (owner = auth.uid());
+  for update to authenticated using (owner = (select auth.uid())) with check (owner = (select auth.uid()));
 create policy "delete own items" on public.items
-  for delete to authenticated using (owner = auth.uid());
+  for delete to authenticated using (owner = (select auth.uid()));
 
 -- Swap requests: only the requester and the item's owner can see them.
 create policy "parties read requests" on public.swap_requests
   for select to authenticated
   using (
-    requester = auth.uid()
-    or exists (select 1 from public.items i where i.id = item_id and i.owner = auth.uid())
+    requester = (select auth.uid())
+    or exists (select 1 from public.items i where i.id = item_id and i.owner = (select auth.uid()))
   );
 create policy "request someone else's item" on public.swap_requests
   for insert to authenticated
   with check (
-    requester = auth.uid()
+    requester = (select auth.uid())
     and status = 'pending'
     and exists (
       select 1 from public.items i
-      where i.id = item_id and i.owner <> auth.uid() and i.status <> 'swapped'
+      where i.id = item_id and i.owner <> (select auth.uid()) and i.status <> 'swapped'
     )
     and (
       offer_item_id is null
-      or exists (select 1 from public.items o where o.id = offer_item_id and o.owner = auth.uid())
+      or exists (select 1 from public.items o where o.id = offer_item_id and o.owner = (select auth.uid()))
     )
   );
 create policy "parties update requests" on public.swap_requests
@@ -139,7 +142,7 @@ create policy "parties read messages" on public.messages
   for select to authenticated using (private.is_request_party(request_id));
 create policy "parties send messages" on public.messages
   for insert to authenticated
-  with check (sender = auth.uid() and private.is_request_party(request_id));
+  with check (sender = (select auth.uid()) and private.is_request_party(request_id));
 
 -- ============================================================
 -- 4. Triggers
