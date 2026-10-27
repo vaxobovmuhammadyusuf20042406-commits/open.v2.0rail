@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Open Rail</title>
+<meta name="description" content="A clothing swap that's open every day. Hang up clothes you no longer wear, browse what neighbours brought, and swap on your own schedule.">
+<meta name="theme-color" content="#EEF0EA">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 4a3 3 0 0 1 3 3c0 1.6-1.3 2.4-2.2 3L16 10.5V12l12 9a2 2 0 0 1-1.2 3.6H5.2A2 2 0 0 1 4 21l12-9' fill='none' stroke='%233446D3' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a clothing rail. Items hang as kraft hang-tags; My rail, Hang it up and Account are tabs beside it. */
+:root {
+  --bg: #EEF0EA; --surface: #FFFFFF; --ink: #1D2346; --muted: #5B6180; --line: #CDD1D8;
+  --tag: #E4CFA7; --tag-ink: #3A2E17;
+  --accent: #3446D3; --accent-ink: #FFFFFF; --accent-soft: #DDE1FA;
+  --ok: #1F7A4A; --ok-soft: #D9F0E2; --warn: #9A5B00; --warn-soft: #FBEACB; --gone: #6B6F7E; --gone-soft: #E3E4E8;
+  --danger: #B3261E; --bubble-me: #3446D3; --bubble-me-ink: #FFFFFF; --bubble: #EEF0EA;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12152A; --surface: #1B2040; --ink: #E7E9F6; --muted: #A2A8C6; --line: #333A63;
+    --tag: #4A3D26; --tag-ink: #F1E2C2; --accent: #8E9CFF; --accent-ink: #12152A; --accent-soft: #2A3263;
+    --ok: #7FD8A4; --ok-soft: #1D3B2C; --warn: #F2C072; --warn-soft: #3D3020; --gone: #A6A9B8; --gone-soft: #2B2E3E;
+    --danger: #FF8A80; --bubble-me: #8E9CFF; --bubble-me-ink: #12152A; --bubble: #262C52;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.5;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.1; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.label { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+
+/* Header */
+.top { padding-block: 18px 0; display: flex; align-items: center; justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 800; font-size: 22px; letter-spacing: -.01em; color: inherit; text-decoration: none; }
+.brand svg { width: 30px; height: 30px; flex: none; color: var(--accent); }
+.tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; overflow-x: auto; max-width: 100%; }
+.tab { border: 0; background: none; padding: 8px 14px; border-radius: 999px; cursor: pointer; font-weight: 700; font-size: 14px; color: var(--muted); white-space: nowrap; }
+.tab[aria-current="page"] { background: var(--ink); color: var(--bg); }
+.dot { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-family: var(--f-mono); font-size: 11px; font-weight: 500; }
+
+/* Hero */
+.hero { padding-block: 40px 28px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: end; }
+.hero h1 { font-size: clamp(36px, 6.4vw, 68px); font-weight: 800; letter-spacing: -.03em; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { margin: 16px 0 0; max-width: 34em; color: var(--muted); font-size: 18px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; counter-reset: s; }
+.steps li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 10px; align-items: start; }
+.steps li::before { content: counter(s); font-family: var(--f-mono); font-size: 13px; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; }
+.steps b { display: block; }
+.steps span { color: var(--muted); font-size: 14px; }
+.tally { margin-top: 18px; font-family: var(--f-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tally b { color: var(--ink); font-weight: 500; }
+
+/* Filters */
+.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-block: 14px; border-top: 1px solid var(--line); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: var(--surface); padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 14px; }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.grow { flex: 1 1 180px; min-width: 0; }
+.field { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.field.auto { width: auto; }
+textarea.field { resize: vertical; min-height: 84px; }
+.check { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--muted); white-space: nowrap; }
+
+/* Rail */
+.rail { position: relative; padding-top: 34px; margin-top: 6px; }
+.rail::before { content: ""; position: absolute; left: -4px; right: -4px; top: 0; height: 8px; border-radius: 4px; background: linear-gradient(var(--muted), var(--ink)); opacity: .75; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 40px 18px; padding-bottom: 48px; }
+.tagwrap { position: relative; filter: drop-shadow(0 4px 8px rgba(29,35,70,.14)); min-width: 0; }
+.tagwrap::before { content: ""; position: absolute; left: 50%; top: -34px; width: 2px; height: 46px; background: var(--muted); transform: translateX(-1px); z-index: 2; }
+.tagc { position: relative; background: var(--tag); color: var(--tag-ink); border: 0; padding: 26px 12px 14px; text-align: left; cursor: pointer; width: 100%;
+  clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%, 0 22px); transition: transform .18s ease; transform-origin: 50% 0; display: flex; flex-direction: column; gap: 10px; }
+.tagc::before { content: ""; position: absolute; left: 50%; top: 8px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--bg); box-shadow: inset 0 0 0 2px rgba(58,46,23,.25); }
+.tagc:hover { transform: rotate(-1.2deg); }
+.tagwrap:nth-child(2n) .tagc:hover { transform: rotate(1.2deg); }
+.photo { aspect-ratio: 4 / 5; max-width: 100%; width: 100%; border-radius: 6px; overflow: hidden; background: var(--surface); position: relative; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.swatch { position: absolute; inset: 0; display: grid; place-items: center; }
+.swatch span { font-family: var(--f-display); font-weight: 800; font-size: 42px; color: rgba(255,255,255,.85); text-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.tagc h3 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; font-family: var(--f-mono); font-size: 12px; margin: 0; }
+.meta dt { opacity: .7; text-transform: uppercase; letter-spacing: .06em; }
+.meta dd { margin: 0; overflow-wrap: anywhere; }
+.size { position: absolute; top: 34px; right: 20px; z-index: 1; font-family: var(--f-mono); font-weight: 500; font-size: 13px; background: var(--ink); color: var(--bg); padding: 3px 8px; border-radius: 4px; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; width: fit-content; white-space: nowrap; }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.st-available, .st-accepted, .st-completed { background: var(--ok-soft); color: var(--ok); }
+.st-reserved, .st-pending { background: var(--warn-soft); color: var(--warn); }
+.st-swapped, .st-declined, .st-withdrawn { background: var(--gone-soft); color: var(--gone); }
+.tagc.swapped .photo { opacity: .55; }
+.by { font-size: 13px; opacity: .8; overflow-wrap: anywhere; }
+.empty { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; align-items: center; padding-bottom: 48px; }
+.empty h2 { font-size: 28px; }
+.empty p { color: var(--muted); max-width: 32em; }
+
+/* Buttons */
+.btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 700; padding: 11px 18px; border-radius: 10px; cursor: pointer; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.small { padding: 6px 12px; font-size: 14px; border-radius: 8px; }
+.btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--line); }
+.linkbtn { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+
+.notice { background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; font-size: 15px; margin-block: 12px; }
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 10px; z-index: 60; font-weight: 700; max-width: calc(100% - 32px); }
+
+/* Sheet */
+.scrim { position: fixed; inset: 0; background: rgba(10,12,28,.5); z-index: 40; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: 100%; max-width: 760px; max-height: 92%; overflow: auto; border-radius: 18px 18px 0 0;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.sheet.narrow { max-width: 460px; }
+@media (min-width: 760px) { .scrim { align-items: center; } .sheet { border-radius: 18px; padding: 28px; } }
+.sheet-head { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.sheet-head h2 { font-size: 28px; overflow-wrap: anywhere; }
+.x { border: 1px solid var(--line); background: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 18px; flex: none; }
+.detail { display: grid; grid-template-columns: minmax(0, 240px) minmax(0, 1fr); gap: 22px; margin-top: 16px; }
+.detail .photo { border-radius: 10px; }
+.detail .meta { font-size: 13px; gap: 6px 14px; }
+.note { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+
+/* Forms */
+form.stack { display: grid; gap: 14px; }
+.row2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.f { display: grid; gap: 6px; min-width: 0; }
+.f > span { font-weight: 700; font-size: 14px; }
+.f small, .hint { color: var(--muted); font-size: 13px; font-weight: 400; }
+.dropzone { border: 2px dashed var(--line); border-radius: 12px; padding: 16px; display: flex; gap: 14px; align-items: center; cursor: pointer; }
+.dropzone .photo { width: 80px; flex: none; }
+.err { color: var(--danger); font-size: 14px; margin: 0; }
+.err:empty { display: none; }
+.seg { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 10px; }
+.seg button { flex: 1; border: 0; background: none; padding: 8px; border-radius: 8px; font-weight: 700; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+
+/* My rail */
+.page { padding-block: 32px 56px; display: grid; gap: 36px; }
+.page.form-page { max-width: 720px; }
+.page h2 { font-size: 30px; letter-spacing: -.02em; }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.list { display: grid; gap: 10px; }
+.rowc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+button.rowc { text-align: left; cursor: pointer; width: 100%; }
+button.rowc:hover { border-color: var(--accent); }
+.rowc .photo { width: 64px; border-radius: 6px; }
+.rowc h3 { font-size: 17px; overflow-wrap: anywhere; }
+.rowc .sub { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.rowc .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+.blank { color: var(--muted); background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; }
+.confirm { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; flex-wrap: wrap; }
+.new { font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent-ink); background: var(--accent); padding: 2px 7px; border-radius: 999px; }
+
+/* Thread */
+.thread { display: grid; gap: 8px; margin-top: 16px; padding: 14px; background: var(--bg); border-radius: 12px; max-height: 340px; overflow-y: auto; }
+.bubble { max-width: 82%; padding: 8px 12px; border-radius: 14px; background: var(--surface); overflow-wrap: anywhere; white-space: pre-wrap; }
+.bubble.me { justify-self: end; background: var(--bubble-me); color: var(--bubble-me-ink); border-bottom-right-radius: 4px; }
+.bubble.them { justify-self: start; border-bottom-left-radius: 4px; }
+.bubble small { display: block; font-size: 11px; opacity: .7; margin-top: 2px; }
+.sys { justify-self: center; font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-align: center; }
+.composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; margin-top: 10px; align-items: end; }
+.composer textarea { min-height: 46px; }
+.req-head { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 12px; align-items: center; margin-top: 12px; }
+.req-head .photo { width: 56px; border-radius: 6px; }
+
+footer { border-top: 1px solid var(--line); padding-block: 20px 28px; color: var(--muted); font-size: 14px; display: flex; gap: 8px 20px; flex-wrap: wrap; justify-content: space-between; }
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding-block: 28px 20px; }
+  .detail { grid-template-columns: minmax(0, 1fr); }
+  .detail .photo { max-width: 170px; }
+  .empty { grid-template-columns: minmax(0, 1fr); }
+  .empty .tagwrap { max-width: 220px; }
+  .row3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .rowc { grid-template-columns: 56px minmax(0, 1fr); }
+  .rowc .photo { width: 56px; }
+  .rowc .actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+@media (max-width: 460px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px 12px; }
+  .tagc { padding: 24px 8px 12px; clip-path: polygon(16px 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%, 0 16px); }
+  .tagc h3 { font-size: 16px; }
+  .size { right: 14px; top: 30px; }
+  .row2, .row3 { grid-template-columns: minmax(0, 1fr); }
+  .tab { padding: 8px 10px; }
+  .top { justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) { .tagc { transition: none; } .tagc:hover { transform: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#rail" aria-label="Open Rail home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4a3 3 0 0 1 3 3c0 1.6-1.3 2.4-2.2 3L16 10.5V12l12 9a2 2 0 0 1-1.2 3.6H5.2A2 2 0 0 1 4 21l12-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Open Rail
+    </a>
+    <nav class="tabs" aria-label="Sections">
+      <button class="tab" data-view="rail" type="button">The rail</button>
+      <button class="tab" data-view="mine" type="button">My rail<span class="dot" id="mineDot" hidden></span></button>
+      <button class="tab" data-view="add" type="button">Hang it up</button>
+      <button class="tab" data-view="account" type="button" id="accountTab">Sign in</button>
+    </nav>
+  </header>
+  <div id="banner"></div>
+  <main id="main"></main>
+  <footer>
+    <span>Open Rail · a swap that keeps clothes in use</span>
+    <span>Be kind, wash before you hand over, and meet somewhere public.</span>
+  </footer>
+</div>
+<div id="overlay"></div>
+<div id="toastHost" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+"use strict";
+
+// ================================================================
+// Constants
+// ================================================================
+const CATS = ["Tops", "Bottoms", "Dresses", "Knitwear", "Outerwear", "Shoes", "Accessories", "Kids"];
+const CONDITIONS = ["New with tags", "Like new", "Good", "Well loved"];
+const COLORS = { Black:"#23242a", White:"#d9d6cc", Grey:"#8d9099", Navy:"#25305e", Blue:"#3b6fd1", Green:"#3f7d55", Red:"#c23b31", Pink:"#e48aa8", Purple:"#7b4fa8", Yellow:"#e3b52f", Orange:"#e07b2f", Brown:"#7a5237", Beige:"#cdb894", Multi:"linear-gradient(135deg,#c23b31,#e3b52f,#3f7d55,#3b6fd1)" };
+const SIZES = ["XS","S","M","L","XL","XXL","EU 34","EU 36","EU 38","EU 40","EU 42","EU 44","One size","Shoe 38","Shoe 40","Shoe 42","Shoe 44"];
+const ITEM_STATUS = { available: "Available", reserved: "Reserved", swapped: "Swapped" };
+const REQ_STATUS = { pending: "Waiting", accepted: "Accepted", declined: "Declined", withdrawn: "Withdrawn", completed: "Swapped" };
+const VIEWS = ["rail", "mine", "add", "account"];
+const CFG = window.OPEN_RAIL_CONFIG || {};
+
+// ================================================================
+// Small helpers
+// ================================================================
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const ms = (t) => typeof t === "number" ? t : Date.parse(t);
+const ago = (t) => {
+  const d = (Date.now() - ms(t)) / 1000;
+  if (d < 60) return "just now";
+  if (d < 3600) return Math.floor(d / 60) + " min ago";
+  if (d < 86400) return Math.floor(d / 3600) + " h ago";
+  const days = Math.floor(d / 86400);
+  return days === 1 ? "yesterday" : days < 30 ? days + " days ago" : new Date(ms(t)).toLocaleDateString();
+};
+const store = {
+  get(k, def) { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch (e) { return def; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+};
+const toast = (msg) => {
+  const host = $("#toastHost");
+  host.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
+  clearTimeout(toast.t); toast.t = setTimeout(() => { host.innerHTML = ""; }, 2800);
+};
+const friendly = (e) => {
+  const m = (e && (e.message || e.error_description || String(e))) || "";
+  if (/Invalid login credentials/i.test(m)) return "That email and password don't match. Check them, or reset your password.";
+  if (/already registered/i.test(m)) return "There's already an account with that email. Sign in instead.";
+  if (/Email not confirmed/i.test(m)) return "Confirm your email first. Check your inbox for the link.";
+  if (/rate limit/i.test(m)) return "Too many emails were sent in a short time. Wait a while and try again.";
+  if (/Password should be/i.test(m)) return "Use a password with at least 6 characters.";
+  if (/swap_requests_one_open|duplicate key/i.test(m)) return "You already have an open request for this item.";
+  if (/Failed to fetch|NetworkError/i.test(m)) return "Can't reach the server. Check your connection and try again.";
+  return m || "Something went wrong. Try again.";
+};
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now().toString(36));
+
+async function shrinkImage(file) {
+  const bmp = await createImageBitmap(file);
+  const max = 1200, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error("Could not read that image")), "image/jpeg", 0.85));
+}
+
+// ================================================================
+// Backend: Supabase
+// ================================================================
+function supabaseBackend(url, key) {
+  const sb = window.supabase.createClient(url, key);
+  const ITEM_SEL = "*, owner_profile:profiles!items_owner_fkey(display_name, area)";
+  const REQ_SEL = "*, item:items!swap_requests_item_id_fkey(*, owner_profile:profiles!items_owner_fkey(display_name, area)), requester_profile:profiles!swap_requests_requester_fkey(display_name, area), offer:items!swap_requests_offer_item_id_fkey(id, title, size)";
+  const photoUrl = (p) => p ? sb.storage.from("photos").getPublicUrl(p).data.publicUrl : null;
+  const mapItem = (r) => r && ({ ...r, photo_url: photoUrl(r.photo_path), owner_name: r.owner_profile?.display_name || "Someone", owner_area: r.owner_profile?.area || "" });
+  const mapReq = (r) => ({ ...r, item: mapItem(r.item), requester_name: r.requester_profile?.display_name || "Someone", requester_area: r.requester_profile?.area || "", offer_title: r.offer ? `${r.offer.title}${r.offer.size ? " · " + r.offer.size : ""}` : "" });
+  const ok = ({ data, error }) => { if (error) throw error; return data; };
+
+  return {
+    demo: false,
+    async session() { const { data } = await sb.auth.getSession(); return data.session ? { id: data.session.user.id, email: data.session.user.email } : null; },
+    onAuth(cb) { sb.auth.onAuthStateChange((event, s) => cb(event, s ? { id: s.user.id, email: s.user.email } : null)); },
+    async signUp({ email, password, name, area }) {
+      const data = ok(await sb.auth.signUp({ email, password, options: { data: { display_name: name, area }, emailRedirectTo: location.href.split("#")[0] } }));
+      return { needsConfirm: !data.session };
+    },
+    async signIn({ email, password }) { ok(await sb.auth.signInWithPassword({ email, password })); },
+    async signOut() { await sb.auth.signOut(); },
+    async resetPassword(email) { ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.split("#")[0] })); },
+    async updatePassword(password) { ok(await sb.auth.updateUser({ password })); },
+    async myProfile(id) { return ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle()); },
+    async saveProfile(id, p) { ok(await sb.from("profiles").update(p).eq("id", id)); },
+    async listItems() { return ok(await sb.from("items").select(ITEM_SEL).order("created_at", { ascending: false }).limit(1000)).map(mapItem); },
+    async createItem(it) { return mapItem(ok(await sb.from("items").insert(it).select(ITEM_SEL).single())); },
+    async updateItem(id, patch) { ok(await sb.from("items").update(patch).eq("id", id)); },
+    async deleteItem(item) {
+      ok(await sb.from("items").delete().eq("id", item.id));
+      if (item.photo_path) await sb.storage.from("photos").remove([item.photo_path]);
+    },
+    async uploadPhoto(userId, blob) {
+      const path = `${userId}/${newId()}.jpg`;
+      ok(await sb.storage.from("photos").upload(path, blob, { contentType: "image/jpeg", upsert: false }));
+      return path;
+    },
+    async removePhoto(path) { if (path) await sb.storage.from("photos").remove([path]); },
+    async listRequests() { return ok(await sb.from("swap_requests").select(REQ_SEL).order("created_at", { ascending: false }).limit(1000)).map(mapReq); },
+    async createRequest(r) { ok(await sb.from("swap_requests").insert(r)); },
+    async setRequestStatus(id, status) { ok(await sb.from("swap_requests").update({ status }).eq("id", id)); },
+    async listMessages(requestId) { return ok(await sb.from("messages").select("*").eq("request_id", requestId).order("created_at", { ascending: true })); },
+    async latestMessages() { return ok(await sb.from("messages").select("request_id, sender, created_at").order("created_at", { ascending: false }).limit(500)); },
+    async sendMessage(requestId, body) { ok(await sb.from("messages").insert({ request_id: requestId, body })); },
+    subscribe(onChange) {
+      sb.channel("open-rail")
+        .on("postgres_changes", { event: "*", schema: "public", table: "items" }, () => onChange("items"))
+        .on("postgres_changes", { event: "*", schema: "public", table: "swap_requests" }, () => onChange("requests"))
+        .on("postgres_changes", { event: "*", schema: "public", table: "messages" }, (p) => onChange("messages", p.new && p.new.request_id))
+        .subscribe();
+    },
+  };
+}
+
+// ================================================================
+// Backend: demo (no server; sample data kept in this browser)
+// ================================================================
+function demoBackend() {
+  const KEY = "openrail-demo-v1";
+  const now = Date.now(), H = 3600e3, D = 24 * H;
+  const seed = () => ({
+    me: "u-you",
+    profiles: {
+      "u-you": { id: "u-you", display_name: "You (demo)", area: "Your area" },
+      "u-mira": { id: "u-mira", display_name: "Mira", area: "Weserkiez" },
+      "u-jonas": { id: "u-jonas", display_name: "Jonas", area: "Schillerkiez" },
+      "u-aylin": { id: "u-aylin", display_name: "Aylin", area: "Reuterkiez" },
+    },
+    items: [
+      { id: "i1", owner: "u-mira", title: "Linen overshirt", category: "Tops", size: "M", condition: "Like new", color: "Beige", fabric: "100% linen", note: "Bought for a wedding, worn once. Runs slightly big.", status: "available", reserved_for: null, created_at: now - 2 * D },
+      { id: "i2", owner: "u-jonas", title: "Yellow rain jacket", category: "Outerwear", size: "L", condition: "Good", color: "Yellow", fabric: "PU-coated cotton", note: "Fully waterproof, hood folds into the collar. Small scuff on the back.", status: "available", reserved_for: null, created_at: now - 5 * H },
+      { id: "i3", owner: "u-aylin", title: "Chunky knit cardigan", category: "Knitwear", size: "S", condition: "Well loved", color: "Green", fabric: "Wool blend", note: "Very warm, a bit pilled under the arms.", status: "reserved", reserved_for: "u-mira", created_at: now - 3 * D },
+      { id: "i4", owner: "u-jonas", title: "Straight-leg jeans", category: "Bottoms", size: "EU 40", condition: "Good", color: "Navy", fabric: "98% cotton, 2% elastane", note: "W32 L32.", status: "available", reserved_for: null, created_at: now - 1 * D },
+      { id: "i5", owner: "u-mira", title: "Leather ankle boots", category: "Shoes", size: "Shoe 38", condition: "Like new", color: "Brown", fabric: "Leather", note: "Too narrow for me. Resoled last year.", status: "available", reserved_for: null, created_at: now - 9 * H },
+      { id: "i6", owner: "u-you", title: "Striped Breton top", category: "Tops", size: "S", condition: "Good", color: "Navy", fabric: "100% cotton", note: "Classic navy and white stripes.", status: "available", reserved_for: null, created_at: now - 4 * D },
+      { id: "i7", owner: "u-aylin", title: "Kids' puffer, age 6", category: "Kids", size: "116", condition: "Good", color: "Red", fabric: "Polyester", note: "My son outgrew it after one winter.", status: "available", reserved_for: null, created_at: now - 6 * D },
+      { id: "i8", owner: "u-aylin", title: "Silk scarf", category: "Accessories", size: "One size", condition: "New with tags", color: "Multi", fabric: "Silk", note: "", status: "swapped", reserved_for: "u-jonas", created_at: now - 12 * D },
+    ],
+    requests: [
+      { id: "r1", item_id: "i6", requester: "u-aylin", message: "Hi! I've been looking for a Breton top for ages. I could pick it up any evening this week.", offer_item_id: "i7", status: "pending", created_at: now - 3 * H, updated_at: now - 3 * H },
+    ],
+    messages: [
+      { id: "m1", request_id: "r1", sender: "u-aylin", body: "Also happy to meet at the Saturday market on Maybachufer if that's easier.", created_at: now - 2 * H },
+    ],
+  });
+  let db = store.get(KEY, null) || seed();
+  const save = () => store.set(KEY, db);
+  const listeners = [];
+  const changed = (what, extra) => { save(); listeners.forEach(f => f(what, extra)); };
+  const prof = (id) => db.profiles[id] || { display_name: "Someone", area: "" };
+  const mapItem = (it) => it && ({ ...it, photo_url: it.photo_data || null, owner_name: prof(it.owner).display_name, owner_area: prof(it.owner).area });
+  const visibleReq = (r) => { const it = db.items.find(i => i.id === r.item_id); return it && (r.requester === db.me || it.owner === db.me); };
+  const delay = (v) => new Promise(r => setTimeout(() => r(v), 120));
+  let authCb = () => {};
+  let signedIn = store.get(KEY + "-in", true);
+
+  return {
+    demo: true,
+    reset() { db = seed(); save(); },
+    async session() { return signedIn ? { id: db.me, email: "you@example.com" } : null; },
+    onAuth(cb) { authCb = cb; },
+    async signUp({ name, area }) { db.profiles[db.me] = { ...db.profiles[db.me], display_name: name || "You (demo)", area: area || "" }; signedIn = true; store.set(KEY + "-in", true); save(); authCb("SIGNED_IN", { id: db.me }); return { needsConfirm: false }; },
+    async signIn() { signedIn = true; store.set(KEY + "-in", true); authCb("SIGNED_IN", { id: db.me }); },
+    async signOut() { signedIn = false; store.set(KEY + "-in", false); authCb("SIGNED_OUT", null); },
+    async resetPassword() { await delay(); },
+    async updatePassword() { await delay(); },
+    async myProfile(id) { return delay(db.profiles[id] ? { ...db.profiles[id] } : null); },
+    async saveProfile(id, p) { db.profiles[id] = { ...db.profiles[id], ...p }; changed("items"); },
+    async listItems() { return delay(db.items.slice().sort((a, b) => b.created_at - a.created_at).map(mapItem)); },
+    async createItem(it) { const row = { id: newId(), owner: db.me, status: "available", reserved_for: null, created_at: Date.now(), ...it }; db.items.push(row); changed("items"); return mapItem(row); },
+    async updateItem(id, patch) { const it = db.items.find(i => i.id === id); if (it) Object.assign(it, patch); changed("items"); },
+    async deleteItem(item) { db.items = db.items.filter(i => i.id !== item.id); db.requests = db.requests.filter(r => r.item_id !== item.id); changed("items"); },
+    async uploadPhoto(_u, blob) {
+      return await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(blob); });
+    },
+    async removePhoto() {},
+    async listRequests() {
+      return delay(db.requests.filter(visibleReq).sort((a, b) => b.created_at - a.created_at).map(r => {
+        const off = db.items.find(i => i.id === r.offer_item_id);
+        return { ...r, item: mapItem(db.items.find(i => i.id === r.item_id)), requester_name: prof(r.requester).display_name, requester_area: prof(r.requester).area, offer_title: off ? `${off.title}${off.size ? " · " + off.size : ""}` : "" };
+      }));
+    },
+    async createRequest(r) {
+      if (db.requests.some(x => x.item_id === r.item_id && x.requester === db.me && ["pending", "accepted"].includes(x.status))) throw new Error("duplicate key swap_requests_one_open");
+      db.requests.push({ id: newId(), requester: db.me, status: "pending", created_at: Date.now(), updated_at: Date.now(), ...r }); changed("requests");
+    },
+    async setRequestStatus(id, status) { const r = db.requests.find(x => x.id === id); if (r) { r.status = status; r.updated_at = Date.now(); } changed("requests"); },
+    async listMessages(requestId) { return delay(db.messages.filter(m => m.request_id === requestId).sort((a, b) => a.created_at - b.created_at)); },
+    async latestMessages() { return db.messages.slice().sort((a, b) => b.created_at - a.created_at); },
+    async sendMessage(requestId, body) { db.messages.push({ id: newId(), request_id: requestId, sender: db.me, body, created_at: Date.now() }); changed("messages", requestId); },
+    subscribe(cb) { listeners.push(cb); },
+  };
+}
+
+// ================================================================
+// State
+// ================================================================
+const live = !!(CFG.supabaseUrl && CFG.supabaseKey && window.supabase);
+const api = live ? supabaseBackend(CFG.supabaseUrl.trim(), CFG.supabaseKey.trim()) : demoBackend();
+
+const S = {
+  view: "rail", me: null, profile: null, recovering: false,
+  items: [], requests: [], lastMsg: {}, ready: false, loadError: null,
+  filter: { cat: "All", q: "", size: "", showGone: false },
+  sheet: null,               // {type:'item', id} | {type:'thread', id} | {type:'auth', mode, next}
+  thread: [],                // messages for open thread
+  pendingDelete: null, editing: null, draft: null, photo: null, busy: false,
+  seen: store.get("openrail-seen", {}),
+};
+const mine = (it) => S.me && it.owner === S.me.id;
+const myItems = () => S.items.filter(mine);
+const incoming = () => S.requests.filter(r => r.item && r.item.owner === S.me?.id);
+const outgoing = () => S.requests.filter(r => r.requester === S.me?.id);
+const itemById = (id) => S.items.find(i => i.id === id);
+const isUnread = (r) => {
+  const lm = S.lastMsg[r.id];
+  const stamp = Math.max(ms(r.updated_at || r.created_at), lm && lm.sender !== S.me?.id ? ms(lm.created_at) : 0);
+  const fromThem = (lm && lm.sender !== S.me?.id) || (r.item?.owner === S.me?.id && r.status === "pending") || (r.requester === S.me?.id && r.status !== "pending");
+  return fromThem && stamp > (S.seen[r.id] || 0) && !["withdrawn"].includes(r.status);
+};
+const markSeen = (id) => { S.seen[id] = Date.now(); store.set("openrail-seen", S.seen); };
+
+// ================================================================
+// Data loading
+// ================================================================
+async function loadAll() {
+  try {
+    S.items = await api.listItems();
+    if (S.me) {
+      S.requests = await api.listRequests();
+      const lm = await api.latestMessages();
+      S.lastMsg = {};
+      for (const m of lm) if (!S.lastMsg[m.request_id]) S.lastMsg[m.request_id] = m;
+    } else { S.requests = []; S.lastMsg = {}; }
+    S.loadError = null;
+  } catch (e) { S.loadError = friendly(e); }
+  S.ready = true;
+  refresh();
+}
+let reloadT;
+const scheduleReload = () => { clearTimeout(reloadT); reloadT = setTimeout(loadAll, 250); };
+
+async function onSignedIn(user) {
+  S.me = user;
+  try { S.profile = await api.myProfile(user.id); } catch (e) { S.profile = null; }
+  await loadAll();
+}
+
+// ================================================================
+// Render helpers
+// ================================================================
+const photoHTML = (it) => {
+  if (it && it.photo_url) return `<div class="photo"><img src="${esc(it.photo_url)}" alt="${esc(it.title)}" loading="lazy"></div>`;
+  const bg = COLORS[it?.color] || COLORS.Grey;
+  return `<div class="photo"><div class="swatch" style="background:${bg}"><span aria-hidden="true">${esc((it?.category || "?")[0])}</span></div></div>`;
+};
+const pill = (st, map = ITEM_STATUS) => `<span class="pill st-${esc(st)}">${esc(map[st] || st)}</span>`;
+const who = (id, name) => S.me && id === S.me.id ? "You" : esc(name);
+
+const tagHTML = (it) => `
+  <div class="tagwrap">
+    ${it.size ? `<span class="size">${esc(it.size)}</span>` : ""}
+    <button type="button" class="tagc ${it.status === "swapped" ? "swapped" : ""}" data-item="${esc(it.id)}">
+      ${photoHTML(it)}
+      <h3>${esc(it.title)}</h3>
+      <dl class="meta"><dt>Cond.</dt><dd>${esc(it.condition)}</dd>${it.fabric ? `<dt>Fabric</dt><dd>${esc(it.fabric)}</dd>` : ""}</dl>
+      ${pill(it.status)}
+      <span class="by">${who(it.owner, it.owner_name)}${it.owner_area ? " · " + esc(it.owner_area) : ""} · ${ago(it.created_at)}</span>
+    </button>
+  </div>`;
+
+function renderBanner() {
+  const parts = [];
+  if (!live) parts.push(`<div class="notice"><b>Demo mode.</b> You're seeing sample data that stays in this browser. Add your Supabase details to <code>config.js</code> to go live. <button class="linkbtn" type="button" data-act="demo-reset">Reset demo</button></div>`);
+  if (S.loadError) parts.push(`<div class="notice">${esc(S.loadError)} <button class="linkbtn" type="button" data-act="retry">Try again</button></div>`);
+  $("#banner").innerHTML = parts.join("");
+}
+
+function renderRail() {
+  const items = S.items;
+  const onRail = items.filter(i => i.status !== "swapped");
+  const people = new Set(items.map(i => i.owner)).size;
+  const swapped = items.filter(i => i.status === "swapped").length;
+  const f = S.filter;
+  const q = f.q.trim().toLowerCase();
+  const shown = items.filter(i =>
+    (f.showGone || i.status !== "swapped") &&
+    (f.cat === "All" || i.category === f.cat) &&
+    (!f.size || (i.size || "").toLowerCase() === f.size.toLowerCase()) &&
+    (!q || [i.title, i.fabric, i.note, i.color, i.category, i.owner_area].join(" ").toLowerCase().includes(q))
+  );
+  const sizes = [...new Set(items.map(i => i.size).filter(Boolean))].sort();
+  const where = CFG.community ? ` in ${esc(CFG.community)}` : "";
+
+  let body;
+  if (!S.ready) body = `<p class="label" style="padding-bottom:48px">Loading the rail…</p>`;
+  else if (!items.length) body = `
+    <div class="empty">
+      ${tagHTML({ id: "", title: "Linen overshirt", size: "M", condition: "Like new", fabric: "100% linen", color: "Beige", category: "Tops", status: "available", owner: "", owner_name: "Example tag", created_at: Date.now() }).replace('data-item=""', 'disabled tabindex="-1"')}
+      <div>
+        <h2>The rail is empty, for now.</h2>
+        <p>Every piece starts as a tag like this one: what it is, the size, how worn it is. Hang up the first thing you've stopped wearing and others can ask for it whenever suits them.</p>
+        <button class="btn" type="button" data-go="add">Hang up your first item</button>
+      </div>
+    </div>`;
+  else if (!shown.length) body = `<div class="blank" style="margin-bottom:48px">Nothing matches those filters. <button class="linkbtn" type="button" data-act="clear">Clear filters</button></div>`;
+  else body = `<div class="grid">${shown.map(tagHTML).join("")}</div>`;
+
+  return `
+    <section class="hero">
+      <div>
+        <h1>A clothing swap${where} that's <em>open every day</em>.</h1>
+        <p>No fixed swap night to miss. Hang up what you've stopped wearing, browse what others brought, and arrange the handover between the two of you.</p>
+        <div class="tally">${S.ready ? `<b>${onRail.length}</b> ${onRail.length === 1 ? "piece" : "pieces"} on the rail · <b>${people}</b> ${people === 1 ? "person" : "people"} swapping${swapped ? ` · <b>${swapped}</b> swapped so far` : ""}` : "&nbsp;"}</div>
+      </div>
+      <ol class="steps">
+        <li><div><b>Hang it up</b><span>A photo, the size and how worn it is. Takes a minute.</span></div></li>
+        <li><div><b>Ask for a swap</b><span>Offer something of yours, or just ask nicely.</span></div></li>
+        <li><div><b>Agree a handover</b><span>Chat here, meet when it suits you both, then mark it swapped.</span></div></li>
+      </ol>
+    </section>
+    ${items.length ? `
+    <div class="filters">
+      <div class="chips" role="group" aria-label="Category">
+        ${["All", ...CATS].map(c => `<button type="button" class="chip" data-cat="${c}" aria-pressed="${f.cat === c}">${c}</button>`).join("")}
+      </div>
+    </div>
+    <div class="filters" style="border-top:0;padding-top:0">
+      <input class="field grow" id="q" type="search" placeholder="Search: linen, raincoat, green…" value="${esc(f.q)}" aria-label="Search the rail">
+      <select class="field auto" id="sizeFilter" aria-label="Size">
+        <option value="">Any size</option>
+        ${sizes.map(s => `<option ${s === f.size ? "selected" : ""}>${esc(s)}</option>`).join("")}
+      </select>
+      <label class="check"><input type="checkbox" id="showGone" ${f.showGone ? "checked" : ""}> Show swapped</label>
+    </div>` : ""}
+    <div class="rail">${body}</div>`;
+}
+
+const signInPrompt = (what) => `<div class="page"><div class="blank">Sign in to ${what}. <button class="linkbtn" type="button" data-act="auth">Sign in or create an account</button></div></div>`;
+
+function reqRow(r, side) {
+  const it = r.item || {};
+  const other = side === "in" ? `${esc(r.requester_name)}${r.requester_area ? " · " + esc(r.requester_area) : ""}` : `${esc(it.owner_name)}${it.owner_area ? " · " + esc(it.owner_area) : ""}`;
+  let state = pill(r.status, REQ_STATUS);
+  if (side === "out" && r.status === "accepted") state = `<span class="pill st-accepted">Reserved for you</span>`;
+  if (side === "out" && r.status === "pending" && it.status === "swapped") state = `<span class="pill st-swapped">Gone to someone else</span>`;
+  return `
+    <button type="button" class="rowc" data-thread="${esc(r.id)}">
+      ${photoHTML(it)}
+      <div style="min-width:0">
+        <h3>${esc(it.title || "Removed item")}</h3>
+        <div class="sub">${side === "in" ? "From" : "Owner:"} ${other} · ${ago(r.created_at)}</div>
+        <div class="pills">${state}${isUnread(r) ? `<span class="new">New</span>` : ""}</div>
+      </div>
+    </button>`;
+}
+
+function renderMine() {
+  if (!S.me) return signInPrompt("see your items, requests and messages");
+  const inc = incoming();
+  const open = inc.filter(r => ["pending", "accepted"].includes(r.status));
+  const closed = inc.filter(r => !["pending", "accepted"].includes(r.status)).slice(0, 10);
+  const out = outgoing();
+  const mineAll = myItems();
+
+  const itemsHTML = mineAll.length ? mineAll.map(it => `
+    <div class="rowc">
+      ${photoHTML(it)}
+      <div style="min-width:0">
+        <h3>${esc(it.title)}</h3>
+        <div class="sub">${esc(it.size || "No size")} · ${esc(it.condition)} · ${ago(it.created_at)}</div>
+        <div class="pills">${pill(it.status)}</div>
+      </div>
+      <div class="actions">
+        <select class="field auto" style="padding:6px 10px;font-size:14px" data-status="${esc(it.id)}" aria-label="Status of ${esc(it.title)}">
+          ${Object.entries(ITEM_STATUS).map(([k, v]) => `<option value="${k}" ${it.status === k ? "selected" : ""}>${v}</option>`).join("")}
+        </select>
+        <button class="btn small ghost" type="button" data-edit="${esc(it.id)}">Edit</button>
+        ${S.pendingDelete === it.id
+          ? `<span class="confirm">Remove it for good? <button class="btn small danger" type="button" data-del-yes="${esc(it.id)}">Remove</button><button class="btn small ghost" type="button" data-act="del-no">Keep</button></span>`
+          : `<button class="btn small danger" type="button" data-del="${esc(it.id)}">Remove</button>`}
+      </div>
+    </div>`).join("") : `<div class="blank">You haven't hung anything up yet. <button class="linkbtn" type="button" data-go="add">Hang up an item</button></div>`;
+
+  return `
+    <div class="page">
+      <section>
+        <div class="section-head"><h2>Requests for your things</h2><span class="label">${open.length} open</span></div>
+        <div class="list">${open.length ? open.map(r => reqRow(r, "in")).join("") : `<div class="blank">No open requests. When someone asks for one of your items, it shows up here and you can chat to arrange the handover.</div>`}</div>
+        ${closed.length ? `<details style="margin-top:12px"><summary class="label" style="cursor:pointer">Closed requests (${closed.length})</summary><div class="list" style="margin-top:10px">${closed.map(r => reqRow(r, "in")).join("")}</div></details>` : ""}
+      </section>
+      <section>
+        <div class="section-head"><h2>What you asked for</h2><span class="label">${out.length}</span></div>
+        <div class="list">${out.length ? out.map(r => reqRow(r, "out")).join("") : `<div class="blank">You haven't asked for anything yet. Browse <button class="linkbtn" type="button" data-go="rail">the rail</button>.</div>`}</div>
+      </section>
+      <section>
+        <div class="section-head"><h2>Your items</h2><span class="label">${mineAll.length} listed</span></div>
+        <div class="list">${itemsHTML}</div>
+      </section>
+    </div>`;
+}
+
+function renderAdd() {
+  if (!S.me) return signInPrompt("hang up your own clothes");
+  const editing = S.editing ? itemById(S.editing) : null;
+  if (!S.draft) S.draft = editing
+    ? { title: editing.title, category: editing.category, size: editing.size || "", condition: editing.condition, color: editing.color, fabric: editing.fabric || "", note: editing.note || "" }
+    : { title: "", category: "Tops", size: "", condition: "Good", color: "Black", fabric: "", note: "" };
+  const d = S.draft;
+  const preview = S.photo ? { photo_url: S.photo.preview, title: "Selected photo" } : editing && editing.photo_url && !S.removePhoto ? editing : { category: d.category, color: d.color };
+  const hasPhoto = !!(S.photo || (editing && editing.photo_url && !S.removePhoto));
+  return `
+    <div class="page form-page">
+      <div><h2>${editing ? "Edit item" : "Hang something up"}</h2><p class="muted" style="margin:8px 0 0">Describe it the way you'd want to read it: what it is, how it fits, how worn it is.</p></div>
+      <form class="stack" id="itemForm" novalidate>
+        <label class="dropzone" for="photoIn">
+          <span id="photoPreview" style="width:80px;flex:none">${photoHTML(preview)}</span>
+          <span><b>${hasPhoto ? "Photo added" : "Add a photo"}</b><br><span class="hint">${hasPhoto ? "Tap to choose a different one." : "Optional. Items with a photo get asked for far more often."}</span></span>
+          <input id="photoIn" type="file" accept="image/*" hidden>
+        </label>
+        ${hasPhoto ? `<div><button class="linkbtn" type="button" data-act="photo-remove">Remove photo</button></div>` : ""}
+        <label class="f"><span>What is it?</span><input class="field" id="title" maxlength="60" required placeholder="e.g. Green wool cardigan" value="${esc(d.title)}"></label>
+        <div class="row3">
+          <label class="f"><span>Category</span><select class="field" id="category">${CATS.map(c => `<option ${c === d.category ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+          <label class="f"><span>Size</span><input class="field" id="size" list="sizes" maxlength="20" placeholder="M, EU 38…" value="${esc(d.size)}"><datalist id="sizes">${SIZES.map(s => `<option value="${s}">`).join("")}</datalist></label>
+          <label class="f"><span>Condition</span><select class="field" id="condition">${CONDITIONS.map(c => `<option ${c === d.condition ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+        </div>
+        <div class="row2">
+          <label class="f"><span>Main colour</span><select class="field" id="color">${Object.keys(COLORS).map(c => `<option ${c === d.color ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+          <label class="f"><span>Fabric <small>(from the care label)</small></span><input class="field" id="fabric" maxlength="40" placeholder="80% wool, 20% nylon" value="${esc(d.fabric)}"></label>
+        </div>
+        <label class="f"><span>Anything to know?</span><textarea class="field" id="note" maxlength="400" placeholder="Fits small. Tiny mark on the left cuff. Would love a rain jacket in return, but no pressure.">${esc(d.note)}</textarea></label>
+        <p class="err" id="formErr" role="alert"></p>
+        <div class="actions" style="justify-content:flex-start">
+          <button class="btn" type="submit" ${S.busy ? "disabled" : ""}>${S.busy ? "Saving…" : editing ? "Save changes" : "Hang it on the rail"}</button>
+          ${editing ? `<button class="btn ghost" type="button" data-act="edit-cancel">Cancel</button>` : ""}
+        </div>
+      </form>
+    </div>`;
+}
+
+function renderAccount() {
+  if (S.recovering) return `
+    <div class="page form-page">
+      <h2>Choose a new password</h2>
+      <form class="stack" id="newPwForm" novalidate>
+        <label class="f"><span>New password</span><input class="field" id="newPw" type="password" minlength="6" autocomplete="new-password"></label>
+        <p class="err" id="pwErr" role="alert"></p>
+        <div><button class="btn" type="submit">Save password</button></div>
+      </form>
+    </div>`;
+  if (!S.me) return signInPrompt("set up your profile");
+  const p = S.profile || {};
+  return `
+    <div class="page form-page">
+      <div><h2>Your profile</h2><p class="muted" style="margin:8px 0 0">Other swappers see your name and area on your items and requests. Your email stays private.</p></div>
+      <form class="stack" id="profileForm" novalidate>
+        <label class="f"><span>Name</span><input class="field" id="pName" maxlength="40" value="${esc(p.display_name || "")}" autocomplete="nickname"></label>
+        <label class="f"><span>Area <small>(neighbourhood or town, helps plan handovers)</small></span><input class="field" id="pArea" maxlength="60" value="${esc(p.area || "")}" placeholder="e.g. Schillerkiez"></label>
+        <p class="err" id="profErr" role="alert"></p>
+        <div><button class="btn" type="submit">Save profile</button></div>
+      </form>
+      <div class="blank" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+        <span>Signed in as <b>${esc(S.me.email || "")}</b></span>
+        <button class="btn ghost small" type="button" data-act="signout">Sign out</button>
+      </div>
+    </div>`;
+}
+
+function renderMain() {
+  const v = S.view;
+  $("#main").innerHTML = v === "mine" ? renderMine() : v === "add" ? renderAdd() : v === "account" ? renderAccount() : renderRail();
+}
+
+function renderChrome() {
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-current", t.dataset.view === S.view ? "page" : "false"));
+  $("#accountTab").textContent = S.me ? "Account" : "Sign in";
+  const n = S.me ? S.requests.filter(isUnread).length : 0;
+  const dot = $("#mineDot"); dot.hidden = !n; dot.textContent = n;
+  renderBanner();
+}
+
+// Refresh after data changes without wiping forms the person is typing in.
+function refresh() {
+  renderChrome();
+  if (S.view === "rail" || S.view === "mine") {
+    const q = $("#q"), hadFocus = document.activeElement === q, pos = q && q.selectionStart;
+    renderMain();
+    if (hadFocus && $("#q")) { $("#q").focus(); try { $("#q").setSelectionRange(pos, pos); } catch (e) {} }
+  } else if (!$("#main").firstElementChild) renderMain();
+  else if (S.view === "account" && !$("#profileForm") && !$("#newPwForm")) renderMain();
+  else if (S.view === "add" && !$("#itemForm")) renderMain();
+  refreshSheet();
+}
+
+// ================================================================
+// Sheets: item detail, request thread, sign-in
+// ================================================================
+function openSheet(s) { S.sheet = s; renderSheet(); if (s.type === "thread") loadThread(s.id); }
+function closeSheet() { S.sheet = null; S.thread = []; renderSheet(); }
+
+function sheetFrame(inner, narrow) {
+  return `<div class="scrim" data-scrim><div class="sheet ${narrow ? "narrow" : ""}" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">${inner}</div></div>`;
+}
+
+function itemSheet(it) {
+  const own = mine(it);
+  const reqs = S.requests.filter(r => r.item_id === it.id);
+  const myReq = reqs.find(r => r.requester === S.me?.id && ["pending", "accepted"].includes(r.status));
+  let action;
+  if (own) {
+    const open = reqs.filter(r => ["pending", "accepted"].includes(r.status)).length;
+    action = `<div class="notice">This is yours. ${open ? `${open} open ${open === 1 ? "request" : "requests"}.` : "No requests yet."} <button class="linkbtn" type="button" data-go="mine">Go to My rail</button> · <button class="linkbtn" type="button" data-edit="${esc(it.id)}">Edit</button></div>`;
+  } else if (it.status === "swapped") action = `<div class="notice">This one has already found a new home.</div>`;
+  else if (myReq) action = `<div class="notice">You asked for this ${ago(myReq.created_at)}. <button class="linkbtn" type="button" data-thread="${esc(myReq.id)}">Open the conversation</button></div>`;
+  else if (!S.me) action = `<div><button class="btn" type="button" data-act="auth" data-next="${esc(it.id)}">Sign in to ask for this</button></div>`;
+  else {
+    const offers = myItems().filter(i => i.status === "available");
+    action = `
+      ${it.status === "reserved" ? `<div class="notice">Reserved for someone else right now. You can still ask in case it falls through.</div>` : ""}
+      <form class="stack" id="askForm" novalidate>
+        <h3 style="font-size:20px">Ask for it</h3>
+        <label class="f"><span>Message to ${esc(it.owner_name)}</span><textarea class="field" id="askMsg" maxlength="400" placeholder="Hi! I'd love this for work. I'm free most evenings after 6."></textarea></label>
+        <label class="f"><span>Offer something in return <small>(optional)</small></span>
+          <select class="field" id="askOffer">
+            <option value="">Nothing specific, just asking</option>
+            ${offers.map(m => `<option value="${esc(m.id)}">${esc(m.title)}${m.size ? " · " + esc(m.size) : ""}</option>`).join("")}
+          </select>
+        </label>
+        <p class="hint" style="margin:0">You'll chat here to agree a time and place. Your email isn't shared.</p>
+        <p class="err" id="askErr" role="alert"></p>
+        <div><button class="btn" type="submit">Send request</button></div>
+      </form>`;
+  }
+  return sheetFrame(`
+    <div class="sheet-head"><div><span class="label">${esc(it.category)}</span><h2 id="sheetTitle">${esc(it.title)}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+    <div class="detail">
+      ${photoHTML(it)}
+      <div style="min-width:0;display:grid;gap:14px;align-content:start">
+        <div>${pill(it.status)}</div>
+        <dl class="meta">
+          <dt>Size</dt><dd>${esc(it.size || "Not given")}</dd>
+          <dt>Condition</dt><dd>${esc(it.condition)}</dd>
+          <dt>Colour</dt><dd>${esc(it.color)}</dd>
+          ${it.fabric ? `<dt>Fabric</dt><dd>${esc(it.fabric)}</dd>` : ""}
+          <dt>From</dt><dd>${who(it.owner, it.owner_name)}${it.owner_area ? ", " + esc(it.owner_area) : ""} · ${ago(it.created_at)}</dd>
+        </dl>
+        ${it.note ? `<p class="note">${esc(it.note)}</p>` : ""}
+        ${action}
+      </div>
+    </div>`);
+}
+
+function threadActions(r) {
+  const it = r.item || {};
+  const iOwn = it.owner === S.me?.id;
+  const b = [];
+  if (iOwn) {
+    if (r.status === "pending") {
+      if (it.status === "available") b.push(`<button class="btn small" type="button" data-req="accept">Accept and reserve</button>`);
+      else if (it.status === "reserved") b.push(`<span class="hint">Reserved for someone else. Release it first to accept this one.</span>`);
+      b.push(`<button class="btn small ghost" type="button" data-req="decline">Decline</button>`);
+    } else if (r.status === "accepted") {
+      b.push(`<button class="btn small" type="button" data-req="complete">Mark as swapped</button>`, `<button class="btn small ghost" type="button" data-req="release">Undo, put back on the rail</button>`);
+    } else if (r.status === "declined") b.push(`<button class="btn small ghost" type="button" data-req="reopen">Reopen request</button>`);
+  } else if (["pending", "accepted"].includes(r.status)) {
+    b.push(`<button class="btn small ghost" type="button" data-req="withdraw">Withdraw my request</button>`);
+  }
+  return b.join("");
+}
+
+function threadSheet(r) {
+  const it = r.item || {};
+  const iOwn = it.owner === S.me?.id;
+  const otherName = iOwn ? r.requester_name : it.owner_name;
+  const otherArea = iOwn ? r.requester_area : it.owner_area;
+  const statusLine = {
+    pending: iOwn ? `${esc(otherName)} would like this. Accept to reserve it for them.` : `Waiting for ${esc(otherName)} to reply.`,
+    accepted: iOwn ? `Reserved for ${esc(otherName)}. Agree a time and place below.` : `${esc(otherName)} reserved this for you. Agree a time and place below.`,
+    declined: iOwn ? "You declined this request." : `${esc(otherName)} passed on this request.`,
+    withdrawn: iOwn ? `${esc(otherName)} withdrew this request.` : "You withdrew this request.",
+    completed: "Swapped. Enjoy it!",
+  }[r.status];
+  return sheetFrame(`
+    <div class="sheet-head"><div><span class="label">Swap request</span><h2 id="sheetTitle">${esc(it.title || "Removed item")}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+    <div class="req-head">${photoHTML(it)}<div style="min-width:0"><div>${pill(r.status, REQ_STATUS)}</div><div class="muted" style="font-size:14px;margin-top:4px">With <b style="color:var(--ink)">${esc(otherName)}</b>${otherArea ? " · " + esc(otherArea) : ""}</div></div></div>
+    <p style="margin:14px 0 0">${statusLine}</p>
+    <div class="actions" id="threadActions" style="justify-content:flex-start;margin-top:10px">${threadActions(r)}</div>
+    <div class="thread" id="threadBox">${threadMessages(r)}</div>
+    ${["withdrawn"].includes(r.status) ? "" : `
+    <form class="composer" id="msgForm" novalidate>
+      <textarea class="field" id="msgBody" maxlength="1000" placeholder="Write a message…" aria-label="Message" rows="1"></textarea>
+      <button class="btn" type="submit">Send</button>
+    </form>`}`);
+}
+
+function threadMessages(r) {
+  const iOwn = r.item?.owner === S.me?.id;
+  const first = `<div class="bubble ${iOwn ? "them" : "me"}">${esc(r.message)}${r.offer_title ? `<small>Offers in return: ${esc(r.offer_title)}</small>` : ""}<small>${ago(r.created_at)}</small></div>`;
+  const msgs = S.thread.map(m => `<div class="bubble ${m.sender === S.me?.id ? "me" : "them"}">${esc(m.body)}<small>${ago(m.created_at)}</small></div>`).join("");
+  return first + msgs;
+}
+
+function authSheet(s) {
+  const mode = s.mode || "signin";
+  const tabs = `<div class="seg" role="group" aria-label="Account"><button type="button" data-auth-mode="signin" aria-pressed="${mode === "signin"}">Sign in</button><button type="button" data-auth-mode="signup" aria-pressed="${mode === "signup"}">Create account</button></div>`;
+  let form;
+  if (mode === "reset") form = `
+    <form class="stack" id="resetForm" novalidate>
+      <p class="muted" style="margin:0">Enter your email and we'll send a link to choose a new password.</p>
+      <label class="f"><span>Email</span><input class="field" id="aEmail" type="email" autocomplete="email" value="${esc(s.email || "")}"></label>
+      <p class="err" id="authErr" role="alert"></p>
+      <div class="actions" style="justify-content:space-between"><button class="linkbtn" type="button" data-auth-mode="signin">Back to sign in</button><button class="btn" type="submit">Send reset link</button></div>
+    </form>`;
+  else if (mode === "sent") form = `<div class="notice">${esc(s.sentText)}</div><div><button class="btn ghost" type="button" data-auth-mode="signin">Back to sign in</button></div>`;
+  else form = `
+    ${tabs}
+    <form class="stack" id="authForm" novalidate>
+      ${mode === "signup" ? `
+        <label class="f"><span>Your name</span><input class="field" id="aName" maxlength="40" autocomplete="nickname" placeholder="What other swappers will see"></label>
+        <label class="f"><span>Area <small>(optional)</small></span><input class="field" id="aArea" maxlength="60" placeholder="Neighbourhood or town"></label>` : ""}
+      <label class="f"><span>Email</span><input class="field" id="aEmail" type="email" autocomplete="email" value="${esc(s.email || "")}"></label>
+      <label class="f"><span>Password</span><input class="field" id="aPw" type="password" minlength="6" autocomplete="${mode === "signup" ? "new-password" : "current-password"}"></label>
+      <p class="err" id="authErr" role="alert"></p>
+      <div class="actions" style="justify-content:space-between">
+        ${mode === "signin" ? `<button class="linkbtn" type="button" data-auth-mode="reset">Forgot password?</button>` : `<span class="hint">At least 6 characters.</span>`}
+        <button class="btn" type="submit" ${S.busy ? "disabled" : ""}>${mode === "signup" ? "Create account" : "Sign in"}</button>
+      </div>
+      ${!live ? `<p class="hint" style="margin:0">Demo mode: any email and password works.</p>` : ""}
+    </form>`;
+  return sheetFrame(`
+    <div class="sheet-head"><div><span class="label">Open Rail</span><h2 id="sheetTitle">${mode === "signup" ? "Join the swap" : mode === "reset" || mode === "sent" ? "Reset password" : "Welcome back"}</h2></div><button class="x" type="button" data-act="close" aria-label="Close">×</button></div>
+    <div style="display:grid;gap:16px;margin-top:16px">${form}</div>`, true);
+}
+
+function renderSheet() {
+  const o = $("#overlay"), s = S.sheet;
+  if (!s) { o.innerHTML = ""; document.body.style.overflow = ""; return; }
+  let html = "";
+  if (s.type === "item") { const it = itemById(s.id); if (!it) return closeSheet(); html = itemSheet(it); }
+  else if (s.type === "thread") { const r = S.requests.find(x => x.id === s.id); if (!r) { if (S.ready) return closeSheet(); return; } html = threadSheet(r); markSeen(r.id); }
+  else if (s.type === "auth") html = authSheet(s);
+  o.innerHTML = html;
+  document.body.style.overflow = "hidden";
+  const box = $("#threadBox"); if (box) box.scrollTop = box.scrollHeight;
+  const first = o.querySelector("input:not([type=hidden]), textarea"); if (first && s.type === "auth") first.focus();
+}
+
+// Update parts of an open sheet without clearing what's being typed.
+function refreshSheet() {
+  const s = S.sheet; if (!s) return;
+  if (s.type === "thread") {
+    const r = S.requests.find(x => x.id === s.id); if (!r) return closeSheet();
+    if (!$("#threadBox")) return renderSheet();
+    const box = $("#threadBox"), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+    box.innerHTML = threadMessages(r);
+    if (atBottom) box.scrollTop = box.scrollHeight;
+    $("#threadActions").innerHTML = threadActions(r);
+    markSeen(r.id);
+  } else if (s.type === "item" && !$("#askForm")) renderSheet();
+}
+
+async function loadThread(id) {
+  try { S.thread = await api.listMessages(id); } catch (e) { toast(friendly(e)); }
+  if (S.sheet && S.sheet.type === "thread" && S.sheet.id === id) refreshSheet();
+}
+
+// ================================================================
+// Navigation
+// ================================================================
+function go(view, opts = {}) {
+  if (!VIEWS.includes(view)) view = "rail";
+  if (view !== "add") { S.editing = null; S.draft = null; S.photo = null; S.removePhoto = false; }
+  S.view = view; S.pendingDelete = null;
+  if (!opts.keepSheet) { S.sheet = null; renderSheet(); }
+  if (location.hash.slice(1) !== view) { try { history.pushState(null, "", "#" + view); } catch (e) {} }
+  renderChrome(); renderMain(); window.scrollTo(0, 0);
+}
+window.addEventListener("popstate", () => { const h = location.hash.slice(1); go(VIEWS.includes(h) ? h : "rail"); });
+
+// ================================================================
+// Actions
+// ================================================================
+async function run(btn, fn) {
+  if (btn) btn.disabled = true;
+  try { await fn(); } catch (e) { toast(friendly(e)); } finally { if (btn && btn.isConnected) btn.disabled = false; }
+}
+
+async function requestAction(kind, btn) {
+  const r = S.requests.find(x => x.id === S.sheet.id); if (!r) return;
+  const it = r.item;
+  await run(btn, async () => {
+    if (kind === "accept") {
+      await api.setRequestStatus(r.id, "accepted");
+      await api.updateItem(it.id, { status: "reserved", reserved_for: r.requester });
+      toast(`Reserved for ${r.requester_name}`);
+    } else if (kind === "decline") { await api.setRequestStatus(r.id, "declined"); toast("Request declined"); }
+    else if (kind === "reopen") { await api.setRequestStatus(r.id, "pending"); toast("Request reopened"); }
+    else if (kind === "release") {
+      await api.setRequestStatus(r.id, "pending");
+      await api.updateItem(it.id, { status: "available", reserved_for: null });
+      toast("Back on the rail");
+    } else if (kind === "complete") {
+      await api.setRequestStatus(r.id, "completed");
+      await api.updateItem(it.id, { status: "swapped", reserved_for: r.requester });
+      const others = S.requests.filter(x => x.item_id === it.id && x.id !== r.id && x.status === "pending");
+      for (const o of others) await api.setRequestStatus(o.id, "declined");
+      toast("Marked as swapped. Nice one!");
+    } else if (kind === "withdraw") { await api.setRequestStatus(r.id, "withdrawn"); toast("Request withdrawn"); }
+    await loadAll();
+  });
+}
+
+document.addEventListener("click", async (e) => {
+  const scrim = e.target.closest("[data-scrim]");
+  if (scrim && e.target === scrim) return closeSheet();
+  const t = e.target.closest("button, a[href^='#']");
+  if (!t) return;
+  if (t.tagName === "A") { e.preventDefault(); return go(t.getAttribute("href").slice(1)); }
+  const d = t.dataset;
+  if (t.classList.contains("tab")) return go(d.view);
+  if (d.go) return go(d.go);
+  if (d.item !== undefined && d.item) return openSheet({ type: "item", id: d.item });
+  if (d.thread) return openSheet({ type: "thread", id: d.thread });
+  if (d.cat) { S.filter.cat = d.cat; return renderMain(); }
+  if (d.edit) { S.editing = d.edit; S.draft = null; S.photo = null; S.removePhoto = false; closeSheet(); S.view = "add"; try { history.pushState(null, "", "#add"); } catch (x) {} renderChrome(); renderMain(); window.scrollTo(0, 0); return; }
+  if (d.del) { S.pendingDelete = d.del; return renderMain(); }
+  if (d.delYes) {
+    const it = itemById(d.delYes);
+    return run(t, async () => { await api.deleteItem(it); S.pendingDelete = null; toast("Removed from the rail"); await loadAll(); });
+  }
+  if (d.req) return requestAction(d.req, t);
+  if (d.authMode) { const email = $("#aEmail")?.value || S.sheet.email; S.sheet = { ...S.sheet, mode: d.authMode, email }; return renderSheet(); }
+  switch (d.act) {
+    case "close": return closeSheet();
+    case "clear": S.filter = { cat: "All", q: "", size: "", showGone: false }; return renderMain();
+    case "del-no": S.pendingDelete = null; return renderMain();
+    case "auth": return openSheet({ type: "auth", mode: "signin", next: d.next || null });
+    case "signout": await api.signOut(); return;
+    case "retry": return loadAll();
+    case "edit-cancel": return go("mine");
+    case "photo-remove": S.photo = null; S.removePhoto = true; return renderMain();
+    case "demo-reset": if (api.reset) { api.reset(); S.seen = {}; store.set("openrail-seen", {}); const s = await api.session(); if (s) await onSignedIn(s); toast("Demo data reset"); } return;
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && S.sheet) closeSheet();
+  if (e.key === "Enter" && !e.shiftKey && e.target.id === "msgBody") { e.preventDefault(); $("#msgForm").requestSubmit(); }
+});
+
+document.addEventListener("input", (e) => {
+  const id = e.target.id;
+  if (id === "q") { S.filter.q = e.target.value; clearTimeout(S.qt); S.qt = setTimeout(() => refresh(), 200); }
+  if (S.draft && ["title", "size", "fabric", "note"].includes(id)) S.draft[id] = e.target.value;
+});
+
+document.addEventListener("change", async (e) => {
+  const el = e.target;
+  if (el.id === "sizeFilter") { S.filter.size = el.value; return renderMain(); }
+  if (el.id === "showGone") { S.filter.showGone = el.checked; return renderMain(); }
+  if (S.draft && ["category", "condition", "color"].includes(el.id)) {
+    S.draft[el.id] = el.value;
+    const ed = S.editing ? itemById(S.editing) : null;
+    if (!S.photo && !(ed && ed.photo_url && !S.removePhoto)) $("#photoPreview").innerHTML = photoHTML({ category: S.draft.category, color: S.draft.color });
+    return;
+  }
+  if (el.dataset.status) {
+    const it = itemById(el.dataset.status), status = el.value;
+    return run(el, async () => {
+      const patch = { status };
+      if (status === "available") patch.reserved_for = null;
+      await api.updateItem(it.id, patch);
+      // keep requests consistent with a manual status change
+      if (status === "available") for (const r of S.requests.filter(x => x.item_id === it.id && x.status === "accepted")) await api.setRequestStatus(r.id, "pending");
+      toast(`Marked ${ITEM_STATUS[status].toLowerCase()}`);
+      await loadAll();
+    });
+  }
+  if (el.id === "photoIn" && el.files && el.files[0]) {
+    try {
+      const blob = await shrinkImage(el.files[0]);
+      if (S.photo) URL.revokeObjectURL(S.photo.preview);
+      S.photo = { blob, preview: URL.createObjectURL(blob) }; S.removePhoto = false;
+    } catch (err) { S.photo = null; toast("That photo couldn't be read. Try a JPEG or PNG."); }
+    renderMain();
+  }
+});
+
+document.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+
+  if (f.id === "authForm") {
+    const mode = S.sheet.mode, err = $("#authErr");
+    const email = $("#aEmail").value.trim(), password = $("#aPw").value;
+    if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = "Enter a valid email address."; return $("#aEmail").focus(); }
+    if (password.length < 6) { err.textContent = "Use a password with at least 6 characters."; return $("#aPw").focus(); }
+    const btn = f.querySelector("[type=submit]"); btn.disabled = true; err.textContent = "";
+    try {
+      if (mode === "signup") {
+        const name = $("#aName").value.trim(), area = $("#aArea").value.trim();
+        if (!name) { err.textContent = "Add a name so swappers know who they're talking to."; btn.disabled = false; return $("#aName").focus(); }
+        const res = await api.signUp({ email, password, name, area });
+        if (res.needsConfirm) { S.sheet = { type: "auth", mode: "sent", sentText: `Check ${email} for a link to confirm your account, then come back and sign in.` }; renderSheet(); }
+      } else await api.signIn({ email, password });
+    } catch (x) { err.textContent = friendly(x); btn.disabled = false; }
+    return;
+  }
+
+  if (f.id === "resetForm") {
+    const email = $("#aEmail").value.trim(), err = $("#authErr");
+    if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = "Enter a valid email address."; return; }
+    try { await api.resetPassword(email); S.sheet = { type: "auth", mode: "sent", sentText: `If there's an account for ${email}, a reset link is on its way.` }; renderSheet(); }
+    catch (x) { err.textContent = friendly(x); }
+    return;
+  }
+
+  if (f.id === "newPwForm") {
+    const pw = $("#newPw").value, err = $("#pwErr");
+    if (pw.length < 6) { err.textContent = "Use a password with at least 6 characters."; return; }
+    try { await api.updatePassword(pw); S.recovering = false; toast("Password updated"); go("rail"); }
+    catch (x) { err.textContent = friendly(x); }
+    return;
+  }
+
+  if (f.id === "profileForm") {
+    const name = $("#pName").value.trim(), area = $("#pArea").value.trim(), err = $("#profErr");
+    if (!name) { err.textContent = "Your name can't be empty."; return; }
+    return run(f.querySelector("[type=submit]"), async () => {
+      await api.saveProfile(S.me.id, { display_name: name, area: area || null });
+      S.profile = { ...S.profile, display_name: name, area };
+      toast("Profile saved"); await loadAll();
+    });
+  }
+
+  if (f.id === "itemForm") {
+    const d = S.draft, err = $("#formErr");
+    if (!d.title.trim()) { err.textContent = "Give it a name so people know what it is."; return $("#title").focus(); }
+    const editing = S.editing ? itemById(S.editing) : null;
+    S.busy = true; renderMain();
+    try {
+      const row = { title: d.title.trim(), category: d.category, size: d.size.trim() || null, condition: d.condition, color: d.color, fabric: d.fabric.trim() || null, note: d.note.trim() || null };
+      let newPath = null;
+      if (S.photo) {
+        try { newPath = await api.uploadPhoto(S.me.id, S.photo.blob); }
+        catch (x) { toast("The photo didn't upload, so a colour swatch is shown instead."); }
+      }
+      if (live) { if (newPath) row.photo_path = newPath; else if (S.removePhoto) row.photo_path = null; }
+      else { if (newPath) row.photo_data = newPath; else if (S.removePhoto) row.photo_data = null; }
+      if (editing) {
+        await api.updateItem(editing.id, row);
+        if ((newPath || S.removePhoto) && editing.photo_path) api.removePhoto(editing.photo_path).catch(() => {});
+        toast("Changes saved");
+      } else { await api.createItem(row); toast("It's on the rail"); }
+      if (S.photo) URL.revokeObjectURL(S.photo.preview);
+      S.busy = false; S.draft = null; S.photo = null; S.removePhoto = false;
+      const back = editing ? "mine" : "rail"; S.editing = null;
+      await loadAll(); go(back);
+    } catch (x) { S.busy = false; renderMain(); $("#formErr").textContent = friendly(x); }
+    return;
+  }
+
+  if (f.id === "askForm") {
+    const it = itemById(S.sheet.id), err = $("#askErr");
+    const message = $("#askMsg").value.trim(), offer = $("#askOffer").value || null;
+    if (!message) { err.textContent = "Write a short message so they know who's asking."; return $("#askMsg").focus(); }
+    const btn = f.querySelector("[type=submit]");
+    return run(btn, async () => {
+      await api.createRequest({ item_id: it.id, message, offer_item_id: offer });
+      toast(`Request sent to ${it.owner_name}`);
+      await loadAll();
+      const r = S.requests.find(x => x.item_id === it.id && x.requester === S.me.id && ["pending", "accepted"].includes(x.status));
+      if (r) openSheet({ type: "thread", id: r.id }); else closeSheet();
+    });
+  }
+
+  if (f.id === "msgForm") {
+    const body = $("#msgBody").value.trim(); if (!body) return;
+    const id = S.sheet.id, btn = f.querySelector("[type=submit]");
+    return run(btn, async () => {
+      await api.sendMessage(id, body);
+      $("#msgBody").value = "";
+      await loadThread(id);
+    });
+  }
+});
+
+// ================================================================
+// Boot
+// ================================================================
+api.onAuth(async (event, user) => {
+  if (event === "PASSWORD_RECOVERY") { S.recovering = true; S.me = user; go("account"); return; }
+  if (event === "SIGNED_OUT") { S.me = null; S.profile = null; S.requests = []; closeSheet(); go(S.view === "rail" ? "rail" : "rail"); loadAll(); return; }
+  if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && user && (!S.me || S.me.id !== user.id)) {
+    const next = S.sheet && S.sheet.type === "auth" ? S.sheet.next : null;
+    if (S.sheet && S.sheet.type === "auth") closeSheet();
+    await onSignedIn(user);
+    if (event === "SIGNED_IN") toast(`Signed in as ${S.profile?.display_name || user.email}`);
+    if (next) openSheet({ type: "item", id: next });
+    else if (S.view === "account" && !S.recovering) renderMain();
+  }
+});
+api.subscribe((what, requestId) => {
+  scheduleReload();
+  if (what === "messages" && S.sheet && S.sheet.type === "thread" && (!requestId || requestId === S.sheet.id)) loadThread(S.sheet.id);
+});
+
+(async () => {
+  const h = location.hash.slice(1);
+  S.view = VIEWS.includes(h) ? h : "rail";
+  renderChrome(); renderMain();
+  if (live === false && CFG.supabaseUrl && !window.supabase) S.loadError = "The Supabase library didn't load. Check your connection and reload.";
+  const s = await api.session().catch(() => null);
+  if (s) await onSignedIn(s); else await loadAll();
+  if (S.view !== "rail") renderMain();
+  // Pick up items changed elsewhere even if live updates drop.
+  setInterval(() => { if (document.visibilityState === "visible") loadAll(); }, 60000);
+})();
+})();
+</script>
+</body>
+</html>
