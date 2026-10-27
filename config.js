@@ -4,11 +4,11 @@
 
 window.OPEN_RAIL_CONFIG = {
   // e.g. "https://abcdefghijklmno.supabase.co"
-  supabaseUrl: "",
+  supabaseUrl: "https://yuebfamxnectuqblrjlv.supabase.co",
 
   // The PUBLISHABLE key (starts with "sb_publishable_") or the legacy "anon" key.
   // Never paste the secret / service_role key here: this file is public.
-  supabaseKey: "",
+  supabaseKey: "sb_publishable_EYv9d1Ccw_3ggaHvoX25Ww_YsEq1HAb",
 
   // Optional: the place your swap serves, shown in the headline. e.g. "Neukölln" or "Leeds students"
   community: "",

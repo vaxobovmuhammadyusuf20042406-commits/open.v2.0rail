@@ -62,7 +62,10 @@ create index messages_request_idx on public.messages (request_id, created_at);
 -- 2. Helper: is the signed-in user part of this request?
 -- ============================================================
 
-create or replace function public.is_request_party(req uuid)
+create schema if not exists private;
+grant usage on schema private to authenticated;
+
+create or replace function private.is_request_party(req uuid)
 returns boolean
 language sql
 stable
@@ -128,15 +131,15 @@ create policy "request someone else's item" on public.swap_requests
   );
 create policy "parties update requests" on public.swap_requests
   for update to authenticated
-  using (public.is_request_party(id))
-  with check (public.is_request_party(id));
+  using (private.is_request_party(id))
+  with check (private.is_request_party(id));
 
 -- Messages: only the two people in the request can read or write.
 create policy "parties read messages" on public.messages
-  for select to authenticated using (public.is_request_party(request_id));
+  for select to authenticated using (private.is_request_party(request_id));
 create policy "parties send messages" on public.messages
   for insert to authenticated
-  with check (sender = auth.uid() and public.is_request_party(request_id));
+  with check (sender = auth.uid() and private.is_request_party(request_id));
 
 -- ============================================================
 -- 4. Triggers
@@ -231,6 +234,13 @@ $$;
 create trigger guard_item_reserved_for
   before update on public.items
   for each row execute function public.guard_item_reserved_for();
+
+-- Helper functions are not part of the public API.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.guard_request_update() from public, anon, authenticated;
+revoke execute on function public.guard_item_reserved_for() from public, anon, authenticated;
+revoke execute on function private.is_request_party(uuid) from public, anon;
+grant execute on function private.is_request_party(uuid) to authenticated;
 
 -- ============================================================
 -- 5. Photo storage
